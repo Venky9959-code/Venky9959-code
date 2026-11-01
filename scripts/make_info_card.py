@@ -1,11 +1,7 @@
 """
-Build a neofetch-style info card SVG (Andrew6rant style) to sit to the RIGHT of
-the ASCII portrait: colored key/value rows for work experience, tech stack, and
-highlights -- NOT GitHub stats (the contribution graph covers those).
-
-Static content, hand-authored below. Lines fade/slide in on a short stagger so
-it feels like the panel is printing alongside the portrait. STATIC=1 emits the
-frozen state for Quick Look previews.
+Build a neofetch-style info card SVG (Andrew6rant style) to sit beside or below
+the ASCII portrait: colored key/value rows for education, tech stack, and
+highlights.
 """
 import html
 import os
@@ -14,7 +10,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "info-card.svg")
 STATIC = bool(os.environ.get("STATIC"))
 
-W, H = 480, 475
+W, H = 540, 520
 PAD = 20
 TITLEBAR_H = 30
 KEY_X = PAD
@@ -26,47 +22,37 @@ BG2 = "#111722"
 FRAME = "#30363d"
 MUTED = "#7d8590"
 INK = "#c9d1d9"
-KEY = "#ffa657"      # orange keys (matches Andrew)
+KEY = "#ffa657"      # orange keys
 SECTION = "#58a6ff"  # blue section headers
 GREEN = "#3fb950"
 ACCENT = "#22d3ee"
 
-# ===========================================================================
-#  EDIT THIS  -- your info panel. It re-lays-out automatically; if it gets too
-#  tall for the card, bump H above (and the width= in your profile README).
-#  The username in the header is HOST below.
-#
-#  row types:
-#    ("host",)              -> "you@github" header + rule
-#    ("kv", key, value)     -> orange key + light value
-#    ("sec", title)         -> blue "— title —" section rule
-#    ("bul", text)          -> green dot + light bullet
-#    ("gap",)               -> a little vertical space
-# ===========================================================================
-HOST = "hxrshityadav"   # shown as  hxrshityadav@github  in the header
+HOST = os.environ.get("GH_PROFILE_USER", "Venky9959-code")
 
 ROWS = [
     ("host",),
-    ("kv", "Now",      "Fullstack Developer & AI Builder"),
-    ("kv", "Focus",    "SaaS products · developer tooling"),
-    ("kv", "Building", "AI-powered web apps end-to-end"),
+    ("kv", "Name",      "Banavathu Venkateswararao (Venky)"),
+    ("kv", "Role",      "Full-Stack Dev · CSE Student · AI Enthusiast"),
+    ("kv", "College",   "VR Siddhartha Engineering College (VRSEC)"),
+    ("kv", "Degree",    "B.Tech in Computer Science (2023 - 2027)"),
+    ("kv", "Location",  "Vijayawada, Andhra Pradesh, India"),
     ("gap",),
-    ("sec", "Stack"),
-    ("kv", "Frontend",  "React · Next.js · TypeScript"),
-    ("kv", "Backend",   "Node.js · Express · PostgreSQL"),
-    ("kv", "AI / ML",   "OpenAI · LangChain · Hugging Face"),
-    ("kv", "Cloud",     "Vercel · Docker · AWS"),
-    ("kv", "Tools",     "Git · Prisma · Tailwind CSS"),
+    ("sec", "Tech Stack"),
+    ("kv", "Frontend",  "React.js · JavaScript · HTML5 · CSS3 · Tailwind"),
+    ("kv", "Backend",   "Node.js · Express.js · REST APIs · Auth/OTP"),
+    ("kv", "Database",  "MySQL · SQL · Schema Design · CRUD"),
+    ("kv", "AI / ML",   "CNN · Prophet · Scikit-Learn · Computer Vision"),
+    ("kv", "Languages", "Python · JavaScript · C · C++"),
+    ("kv", "Tools",     "Git · GitHub · VS Code · npm · Vite"),
     ("gap",),
-    ("sec", "Links"),
-    ("kv", "Portfolio", "harshityadav.dev"),
-    ("kv", "LinkedIn",  "in/hxrshityadav"),
-    ("kv", "X / Twitter", "@harshityadav"),
-    ("kv", "Instagram", "@hxrshityadav"),
+    ("sec", "Key Projects"),
+    ("bul", "Epidemiological Forecasting (React · Prophet · MySQL · PWA)"),
+    ("bul", "Smart Waste Segregation with CNN (Deep Learning & CV)"),
+    ("bul", "SkillsBoostHub Platform (MERN-style · Razorpay · Nodemailer)"),
     ("gap",),
-    ("sec", "Highlights"),
-    ("bul", "Open-source contributor & AI app builder"),
-    ("bul", "Ships full products solo, fast"),
+    ("sec", "Connect"),
+    ("kv", "LinkedIn",  "linkedin.com/in/venky-banavathu-2377082a3"),
+    ("kv", "Email",     "venky995982@gmail.com"),
 ]
 
 
@@ -78,7 +64,7 @@ def rise(inner, i):
     """fade + slight upward slide, staggered by row index; freezes visible."""
     if STATIC:
         return f"<g>{inner}</g>"
-    delay = 0.15 + i * 0.06
+    delay = 0.15 + i * 0.05
     return (f'<g opacity="0" transform="translate(0,5)">{inner}'
             f'<animate attributeName="opacity" from="0" to="1" begin="{delay:.2f}s" dur="0.4s" fill="freeze"/>'
             f'<animateTransform attributeName="transform" type="translate" from="0 5" to="0 0" '
@@ -98,43 +84,40 @@ parts = [
 for i, dotcol in enumerate(["#ff5f56", "#ffbd2e", "#27c93f"]):
     parts.append(f'<circle cx="{PAD + i*16}" cy="{TITLEBAR_H/2}" r="5" fill="{dotcol}"/>')
 parts.append(f'<text x="{W/2}" y="{TITLEBAR_H/2 + 4}" fill="{MUTED}" font-size="12" '
-             f'text-anchor="middle">{esc(HOST)}@github: ~$ neofetch</text>')
+             f'text-anchor="middle">{HOST}@github: ~$ neofetch --profile</text>')
 
-y = TITLEBAR_H + 30
-for i, row in enumerate(ROWS):
-    kind = row[0]
-    if kind == "gap":
-        y += LINE_H * 0.5
-        continue
+y = TITLEBAR_H + 24
+for i, r in enumerate(ROWS):
+    kind = r[0]
     if kind == "host":
-        host = esc(HOST)
-        rule_x = KEY_X + (len(HOST) + 7) * 8 + 8
-        inner = (f'<text x="{KEY_X}" y="{y:.1f}" font-size="14" font-weight="700">'
-                 f'<tspan fill="{GREEN}">{host}</tspan><tspan fill="{MUTED}">@</tspan>'
-                 f'<tspan fill="{ACCENT}">github</tspan></text>'
-                 f'<line x1="{rule_x}" y1="{y-4:.1f}" x2="{W-PAD}" y2="{y-4:.1f}" '
-                 f'stroke="{FRAME}" stroke-opacity="0.8"/>')
-    elif kind == "sec":
-        title = esc(row[1])
-        inner = (f'<text x="{KEY_X}" y="{y:.1f}" fill="{SECTION}" font-size="12.5" font-weight="700">'
-                 f'&#8212; {title}</text>'
-                 f'<line x1="{KEY_X + 12 + len(row[1])*8}" y1="{y-4:.1f}" x2="{W-PAD}" y2="{y-4:.1f}" '
-                 f'stroke="{FRAME}" stroke-opacity="0.8"/>')
+        content = (f'<text x="{KEY_X}" y="{y}" fill="{MUTED}" font-size="12.5">'
+                   f'<tspan fill="{ACCENT}">{HOST}</tspan>@<tspan fill="{MUTED}">github</tspan></text>'
+                   f'<line x1="{KEY_X}" y1="{y+4}" x2="{W-PAD}" y2="{y+4}" stroke="{FRAME}"/>')
+        parts.append(rise(content, i))
+        y += LINE_H - 2
     elif kind == "kv":
-        key, val = esc(row[1]), esc(row[2])
-        inner = (f'<text x="{KEY_X}" y="{y:.1f}" fill="{KEY}" font-size="12.5" font-weight="700">{key}</text>'
-                 f'<text x="{VAL_X}" y="{y:.1f}" fill="{INK}" font-size="12.5">{val}</text>')
+        k, v = r[1], r[2]
+        content = (f'<text x="{KEY_X}" y="{y}" fill="{KEY}" font-size="12">{esc(k)}</text>'
+                   f'<text x="{VAL_X}" y="{y}" fill="{INK}" font-size="12">{esc(v)}</text>')
+        parts.append(rise(content, i))
+        y += LINE_H
+    elif kind == "sec":
+        title = r[1]
+        content = (f'<text x="{KEY_X}" y="{y}" fill="{SECTION}" font-size="11" letter-spacing="1">'
+                   f'-- {esc(title.upper())} --</text>')
+        parts.append(rise(content, i))
+        y += LINE_H - 4
     elif kind == "bul":
-        txt = esc(row[1])
-        inner = (f'<circle cx="{KEY_X+3}" cy="{y-4:.1f}" r="2.5" fill="{GREEN}"/>'
-                 f'<text x="{KEY_X+14}" y="{y:.1f}" fill="{INK}" font-size="12.5">{txt}</text>')
-    else:
-        continue
-    parts.append(rise(inner, i))
-    y += LINE_H
+        text = r[1]
+        content = (f'<circle cx="{KEY_X+4}" cy="{y-3.5}" r="2" fill="{GREEN}"/>'
+                   f'<text x="{KEY_X+14}" y="{y}" fill="{INK}" font-size="11.5">{esc(text)}</text>')
+        parts.append(rise(content, i))
+        y += LINE_H
+    elif kind == "gap":
+        y += 6
 
 parts.append("</svg>")
 svg = "".join(parts)
 with open(OUT, "w", encoding="utf-8") as f:
     f.write(svg)
-print("wrote", OUT, len(svg), "bytes;", W, "x", H, "content_bottom", round(y))
+print("wrote", OUT, len(svg), "bytes")
